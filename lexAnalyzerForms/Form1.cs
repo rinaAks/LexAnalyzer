@@ -6,9 +6,6 @@ using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace lexAnalyzerForms
 {
-    //вещественные и целые числа хранятся в нужном формате, не string
-    //создать структуру, которая хранит лексемы, тип лексемы и значение
-    //служебные слова
 
     public partial class Form1 : Form
     {
@@ -275,19 +272,19 @@ namespace lexAnalyzerForms
 
             while (pos < inputText.Length)
             {
-                tbOutput.Text += "позиция  " + pos.ToString() + '\n';
+                tbOutput.Text += "position  " + pos.ToString() + '\n';
                 scannedLexem = scanLex();
                 if (scannedLexem != "")
                 {
                     AddToStorage(scannedLexem);
-                    tbOutput.Text += "лексема  " + scannedLexem + '\n' + '\n';
+                    tbOutput.Text += "lexem  " + scannedLexem + '\n' + '\n';
                 }
                 else
                 {
                     if(!IsSkipLexem())
-                        tbOutput.Text += "ошибка" + '\n' + '\n';
+                        tbOutput.Text += "error" + '\n' + '\n';
 
-                    else tbOutput.Text += "пробел или enter" + '\n' + '\n';
+                    else tbOutput.Text += "space or enter" + '\n' + '\n';
                 }
                 pos++;
             }
@@ -295,8 +292,8 @@ namespace lexAnalyzerForms
             tbOutput.Text += "СПИСОК ЛЕКСЕМ: \n";
             foreach (Lexem lex in LexemStorage)
             {
-                tbOutput.Text += "лексема: " + lex.Name + '\n';
-                tbOutput.Text += "тип лексемы: " + lex.Type.ToString() + '\n' + '\n';
+                tbOutput.Text += "lexem: " + lex.Name + '\n';
+                tbOutput.Text += "lexem type: " + lex.Type.ToString() + '\n' + '\n';
             }
         }
     }
