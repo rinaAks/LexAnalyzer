@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace lexAnalyzerForms
 {
@@ -11,7 +12,7 @@ namespace lexAnalyzerForms
         private string textForOutput = "";
         public Lexer(string program) 
         {
-            GetLexemsOutOfProgram(program);
+            ScanProgram(program);
         }
 
         public List<Lexem> GetLexemStorage()
@@ -22,41 +23,6 @@ namespace lexAnalyzerForms
         public string GetOutputText()
         {
             return textForOutput;
-        }
-
-        private void GetLexemsOutOfProgram(string program)
-        {
-            LexemStorage.Clear();
-            pos = 0;
-            inputText = program;
-            string scannedLexem = "";
-
-            while (pos < inputText.Length)
-            {
-                textForOutput += "position  " + pos.ToString() + '\n';
-                scannedLexem = scanLex();
-                if (scannedLexem != "")
-                {
-                    AddToStorage(scannedLexem);
-                    textForOutput += "lexem  " + scannedLexem + '\n' + '\n';
-                }
-                else
-                {
-                    if (!IsSkipLexem())
-                        textForOutput += "error" + '\n' + '\n';
-
-                    else textForOutput += "space or enter" + '\n' + '\n';
-                }
-                pos++;
-            }
-
-            textForOutput += "СПИСОК ЛЕКСЕМ: \n";
-            foreach (Lexem lex in LexemStorage)
-            {
-                textForOutput += "lexem: " + lex.Name + '\n';
-                textForOutput += "lexem type: " + lex.Type.ToString() + '\n' + '\n';
-            }
-        
         }
 
 
@@ -133,7 +99,7 @@ namespace lexAnalyzerForms
             NOT_EQUALS,
             ASSIGN,
             INT_DECLARE,
-            FLOAT_DECLARE,
+            DECIMAL_DECLARE,
             ARRAY_DECLARE,
             INPUT,
             OUTPUT,
@@ -150,11 +116,11 @@ namespace lexAnalyzerForms
         string inputText, outputText;
 
         public List<string> KeywordsList = new List<string> { "if", "else", "while", "arr", "input", "output", "int", "decimal" };
-        private string name = "";
         int chislo;
         int pos;
         bool skipLexemFlag = false;
         public List<Lexem> LexemStorage = new List<Lexem>();
+        public List<Lexem> VariableStorage = new List<Lexem>();
 
         public bool IsKeyword(string word)
         {
@@ -171,7 +137,7 @@ namespace lexAnalyzerForms
             if (symbol >= '0' && symbol <= '9') return true;
             return false;
         }
-        public void AddToStorage(string name)
+        public void AddToLexemStorage(string name)
         {
             Lexem lex = new Lexem();
             lex.addName(name);
@@ -214,7 +180,7 @@ namespace lexAnalyzerForms
                 else if (name == "input") lex.addType(LexemType.INPUT);
                 else if (name == "output") lex.addType(LexemType.OUTPUT);
                 else if (name == "int") lex.addType(LexemType.INT_DECLARE);
-                else if (name == "decimal") lex.addType(LexemType.FLOAT_DECLARE);
+                else if (name == "decimal") lex.addType(LexemType.DECIMAL_DECLARE);
                 else if (name == "arr") lex.addType(LexemType.ARRAY_DECLARE);
 
                 else lex.addType(LexemType.NAME);
@@ -251,7 +217,6 @@ namespace lexAnalyzerForms
             if (symbol == '/') return '*';
             else return '=';
         }
-
         public string scanWord()
         {
             string wordd = "";
@@ -272,9 +237,39 @@ namespace lexAnalyzerForms
             return wordd;
         }
 
+
+        public string scanNumber()
+        {
+            string numberr = "";
+
+            numberr = inputText[pos].ToString();
+            if (pos + 1 < inputText.Length)
+            {
+                char nextSymbol = inputText[pos + 1];
+                while (IsNumber(nextSymbol) || nextSymbol == '.')
+                {
+                    numberr += nextSymbol;
+                    pos++;
+                    if (pos + 1 < inputText.Length)
+                        nextSymbol = inputText[pos + 1];
+                    else break;
+                }
+                if (numberr.Contains("."))
+                {
+                    if (numberr.IndexOf(".") + 1 < inputText.Length)
+                    {
+                        if (!IsNumber(numberr[numberr.IndexOf(".") + 1]))
+                            numberr = "";
+                    }
+                    else numberr = "";
+                }
+            }
+
+            return numberr;
+        }
+
         string scanLex()
         {
-            string scannedLexem = "";
             char currSymbol = inputText[pos];
 
             if (IsSingleCharLexem(currSymbol))
@@ -298,8 +293,7 @@ namespace lexAnalyzerForms
 
             if (IsLetter(currSymbol))
             {
-                name = scanWord();
-                return name;
+                return scanWord();
             }
 
             if (currSymbol == ' ' || currSymbol == '\n')
@@ -309,10 +303,75 @@ namespace lexAnalyzerForms
 
             if (IsNumber(currSymbol))
             {
-
+                return scanNumber();
             }
 
             return "";
+        }
+
+
+
+        private void ScanProgram(string program)
+        {
+            LexemStorage.Clear();
+            VariableStorage.Clear();
+            pos = 0;
+            inputText = program;
+            string scannedLexem = "";
+
+            while (pos < inputText.Length)
+            {
+                textForOutput += "position  " + pos.ToString() + '\n';
+                scannedLexem = scanLex();
+                if (scannedLexem != "")
+                {
+                    AddToLexemStorage(scannedLexem);
+                    textForOutput += "lexem  " + scannedLexem + '\n' + '\n';
+                }
+                else
+                {
+                    if (!IsSkipLexem())
+                        textForOutput += "error" + '\n' + '\n';
+
+                    else textForOutput += "space or enter" + '\n' + '\n';
+                }
+                pos++;
+            }
+
+            textForOutput += "СПИСОК ЛЕКСЕМ: \n";
+            foreach (Lexem lex in LexemStorage)
+            {
+                textForOutput += "lexem: " + lex.Name + '\n';
+                textForOutput += "lexem type: " + lex.Type.ToString() + '\n' + '\n';
+            }
+
+            
+            // ищем среди лексем переменные и сохраняем в VariablesStorage
+            for(int i = 0; i < LexemStorage.Count; i++)
+            {
+                Lexem lex = LexemStorage[i];
+                if (lex.Type == LexemType.INTEGER || lex.Type == LexemType.DECIMAL)
+                {
+                    if (i >= 2)
+                    {
+                        if (LexemStorage[i - 1].Type == LexemType.ASSIGN && LexemStorage[i - 2].Type == LexemType.NAME)
+                        {
+                            lex.Value = LexemStorage[i].Name;
+                            lex.Name = LexemStorage[i - 2].Name;
+                            VariableStorage.Add(lex);
+                        }
+                    }
+                }
+            }
+
+            textForOutput += "СПИСОК ПЕРЕМЕННЫХ: \n";
+            foreach (Lexem lex in VariableStorage)
+            {
+                textForOutput += "lexem: " + lex.Name + '\n';
+                textForOutput += "lexem type: " + lex.Type.ToString() + '\n';
+                textForOutput += "lexem value: " + lex.Value.ToString() + '\n' + '\n';
+            }
+
         }
 
     }

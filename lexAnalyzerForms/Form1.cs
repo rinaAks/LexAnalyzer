@@ -15,13 +15,14 @@ namespace lexAnalyzerForms
             InitializeComponent();
         }
 
-
+        
         private void button1_Click(object sender, EventArgs e)
         {
             Lexer lexer = new Lexer(tbInput.Text);
             List<Lexem> myStorage;
             myStorage = lexer.GetLexemStorage();
             tbOutput.Text = lexer.GetOutputText();
+            
         }
     }
 
